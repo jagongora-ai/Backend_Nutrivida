@@ -27,7 +27,7 @@ public class JwtService {
     }
 
     // generador tokens
-    public String generarToke(Usuario usuario){
+    public String generarToken(Usuario usuario){
         return Jwts.builder()
             .subject(String.valueOf(usuario.getId()))
             .claim("rol", usuario.getRol().getNombre())
@@ -40,7 +40,7 @@ public class JwtService {
             .compact();
     }
     
-    //leer y validar el toke
+    //leer y validar el token
     public Claims leerToken(String token){
         return  Jwts.parser()
             .verifyWith(obtenerClave())
