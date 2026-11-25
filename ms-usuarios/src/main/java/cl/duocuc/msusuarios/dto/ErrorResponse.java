@@ -13,5 +13,6 @@ public class ErrorResponse {
     private int status;
     private String mensaje;
     private LocalDateTime fecha;
+    private String ruta;
 
 }
