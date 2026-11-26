@@ -1,0 +1,58 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowed-origins: http://localhost:5173
+                allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+                allowed-headers: "*"
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
+          routes:
+
+            - id: ruta-ms-usuarios
+              uri: lb://ms-usuarios
+              predicates:
+                - Path=/api/auth/**,/api/usuarios,/api/usuarios/**
+
+            - id: ruta-ms-profesionales
+              uri: lb://ms-profesionales
+              predicates:
+                - Path=/api/profesionales,/api/profesionales/**
+
+            - id: ruta-ms-agendar
+              uri: lb://ms-agendar
+              predicates:
+                - Path=/api/citas,/api/citas/**,/api/prestaciones,/api/prestaciones/**
+
+            - id: ruta-ms-pagos
+              uri: lb://ms-pagos
+              predicates:
+                - Path=/api/pagos,/api/pagos/**,/api/boletas,/api/boletas/**
+
+            - id: ruta-ms-fichas
+              uri: lb://ms-fichas
+              predicates:
+                - Path=/api/fichas,/api/fichas/**
+
+            - id: ruta-ms-contacto
+              uri: lb://ms-contacto
+              predicates:
+                - Path=/api/mensajes,/api/mensajes/**
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
