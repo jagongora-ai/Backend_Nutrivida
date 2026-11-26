@@ -1,6 +1,7 @@
 package cl.nutrivida.pagos.controller;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,8 +16,10 @@ import cl.nutrivida.pagos.dto.BoletaResponse;
 import cl.nutrivida.pagos.dto.PagoRequest;
 import cl.nutrivida.pagos.service.PagoService;
 
+
 @RestController
 @RequestMapping("/api/pagos")
+@PreAuthorize("hasRole('Cliente')")
 @Tag(name = "Pagos", description = "Simulación de pagos de citas y emisión de boletas.")
 public class PagoController {
     private final PagoService service;
