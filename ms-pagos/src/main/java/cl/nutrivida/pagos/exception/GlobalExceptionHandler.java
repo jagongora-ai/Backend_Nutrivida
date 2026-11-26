@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -25,37 +26,44 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(PagoDuplicadoException.class)
-    public ResponseEntity<ErrorResponse> manejarDuplicado(PagoDuplicadoException exception, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> manejarDuplicado(PagoDuplicadoException exception,
+            HttpServletRequest request) {
         return respuesta(HttpStatus.CONFLICT, exception.getMessage(), request);
     }
 
     @ExceptionHandler(BoletaNoEncontradaException.class)
-    public ResponseEntity<ErrorResponse> manejarBoletaNoEncontrada(BoletaNoEncontradaException exception, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> manejarBoletaNoEncontrada(BoletaNoEncontradaException exception,
+            HttpServletRequest request) {
         return respuesta(HttpStatus.NOT_FOUND, exception.getMessage(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> manejarValidacion(MethodArgumentNotValidException exception, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> manejarValidacion(MethodArgumentNotValidException exception,
+            HttpServletRequest request) {
         String mensaje = exception.getBindingResult().getFieldErrors().stream()
-            .map(error -> error.getField() + ": " + error.getDefaultMessage())
-            .distinct()
-            .collect(Collectors.joining("; "));
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .distinct()
+                .collect(Collectors.joining("; "));
         return respuesta(HttpStatus.BAD_REQUEST, mensaje, request);
     }
 
     @ExceptionHandler(HandlerMethodValidationException.class)
-    public ResponseEntity<ErrorResponse> manejarParametros(HandlerMethodValidationException exception, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> manejarParametros(HandlerMethodValidationException exception,
+            HttpServletRequest request) {
         return respuesta(HttpStatus.BAD_REQUEST, "Los parámetros enviados no son válidos.", request);
     }
 
     @ExceptionHandler(MissingRequestHeaderException.class)
-    public ResponseEntity<ErrorResponse> manejarHeaderFaltante(MissingRequestHeaderException exception, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> manejarHeaderFaltante(MissingRequestHeaderException exception,
+            HttpServletRequest request) {
         return respuesta(HttpStatus.BAD_REQUEST, "Falta el header requerido: " + exception.getHeaderName(), request);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> manejarJsonInvalido(HttpMessageNotReadableException exception, HttpServletRequest request) {
-        return respuesta(HttpStatus.BAD_REQUEST, "El cuerpo JSON está mal formado o contiene propiedades no permitidas.", request);
+    public ResponseEntity<ErrorResponse> manejarJsonInvalido(HttpMessageNotReadableException exception,
+            HttpServletRequest request) {
+        return respuesta(HttpStatus.BAD_REQUEST,
+                "El cuerpo JSON está mal formado o contiene propiedades no permitidas.", request);
     }
 
     @ExceptionHandler(Exception.class)
@@ -66,7 +74,13 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ErrorResponse> respuesta(HttpStatus status, String mensaje, HttpServletRequest request) {
         ErrorResponse error = new ErrorResponse(
-            LocalDateTime.now(), status.value(), status.getReasonPhrase(), mensaje, request.getRequestURI());
+                LocalDateTime.now(), status.value(), status.getReasonPhrase(), mensaje, request.getRequestURI());
         return ResponseEntity.status(status).body(error);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> manejarSinPermiso(AccessDeniedException exception,
+            HttpServletRequest request) {
+        return respuesta(HttpStatus.FORBIDDEN, "No tienes permiso para realizar esta accion", request);
     }
 }
