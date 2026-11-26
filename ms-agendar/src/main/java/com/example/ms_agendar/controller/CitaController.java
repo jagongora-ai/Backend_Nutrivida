@@ -6,6 +6,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -40,24 +41,28 @@ public class CitaController {
     }
 
     @PostMapping
-public ResponseEntity<CitaResponse> crear(
-        @Valid @RequestBody CitaRequest request,
-        @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado usuario) {
-    return ResponseEntity.status(HttpStatus.CREATED)
-            .body(service.crear(request, usuario.id()));
-}
+    @PreAuthorize("hasRole('Cliente')")
+    public ResponseEntity<CitaResponse> crear(
+            @Valid @RequestBody CitaRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado usuario) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(service.crear(request, usuario));
+    }
 
     @GetMapping("/mias")
+    @PreAuthorize("hasRole('Cliente')")
     public ResponseEntity<List<CitaResponse>> mias( @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado usuario) {
         return ResponseEntity.ok(service.misCitas(usuario.id()));
     }
 
     @GetMapping("/agenda")
+    @PreAuthorize("hasRole('medico')")
     public ResponseEntity<List<CitaResponse>> agenda(@Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado usuario) {
         return ResponseEntity.ok(service.agendaProfesional(usuario.profesionalId()));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('Cliente')")
     public ResponseEntity<CitaResponse> obtener(
             @PathVariable Long id,
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado usuario) {
@@ -65,6 +70,7 @@ public ResponseEntity<CitaResponse> crear(
     }
 
     @PatchMapping("/{id}/cancelar")
+    @PreAuthorize("hasRole('Cliente')")
     public ResponseEntity<MensajeResponse> cancelar(
             @PathVariable Long id,
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado usuario) {

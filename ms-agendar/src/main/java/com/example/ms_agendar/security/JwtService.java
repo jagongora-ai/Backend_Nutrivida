@@ -39,6 +39,7 @@ public class JwtService {
                 Long.valueOf(subject),
                 rol,
                 claims.get("nombre", String.class),
+                claims.get("rut", String.class),
                 claims.get("correo", String.class),
                 profesionalId == null ? null : profesionalId.longValue());
     }
