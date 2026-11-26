@@ -29,9 +29,9 @@ public class PagoService {
         this.agendaClient = agendaClient;
     }
 
-    public BoletaResponse pagar(PagoRequest request) {
+    public BoletaResponse pagar(PagoRequest request, String token) {
         if (pagoRepository.existsByCitaId(request.citaId())) throw new PagoDuplicadoException();
-        AgendaClient.CitaAgenda cita = agendaClient.obtenerCita(request.citaId());
+        AgendaClient.CitaAgenda cita = agendaClient.obtenerCita(request.citaId(), token);
 
         BigDecimal neto = cita.precio().divide(new BigDecimal("1.19"), 0, RoundingMode.HALF_UP);
         BigDecimal iva = cita.precio().subtract(neto);
