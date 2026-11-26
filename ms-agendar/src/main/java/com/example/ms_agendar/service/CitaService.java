@@ -13,13 +13,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.example.ms_agendar.client.ProfesionalClient;
-import com.example.ms_agendar.client.UsuarioClient;
 import com.example.ms_agendar.dto.CitaResponse;
 import com.example.ms_agendar.dto.CitaRequest;
 import com.example.ms_agendar.dto.HorasOcupadasResponse;
 import com.example.ms_agendar.dto.MensajeResponse;
 import com.example.ms_agendar.dto.ProfesionalExterno;
-import com.example.ms_agendar.dto.UsuarioExterno;
 import com.example.ms_agendar.exception.AccesoDenegadoException;
 import com.example.ms_agendar.exception.ClaveInternaInvalidaException;
 import com.example.ms_agendar.exception.ConflictoException;
@@ -30,6 +28,7 @@ import com.example.ms_agendar.model.EstadoCita;
 import com.example.ms_agendar.model.Prestacion;
 import com.example.ms_agendar.repository.CitaRepository;
 import com.example.ms_agendar.repository.PrestacionRepository;
+import com.example.ms_agendar.security.UsuarioAutenticado;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -46,35 +45,30 @@ public class CitaService {
     private final CitaRepository citaRepository;
     private final PrestacionRepository prestacionRepository;
     private final ProfesionalClient profesionalClient;
-    private final UsuarioClient usuarioClient;
     private final Clock clock;
     private final String claveInterna;
 
     public CitaService(CitaRepository citaRepository,
             PrestacionRepository prestacionRepository,
             ProfesionalClient profesionalClient,
-            UsuarioClient usuarioClient,
             Clock clock,
             @Value("${servicios.clave-interna}") String claveInterna) {
         this.citaRepository = citaRepository;
         this.prestacionRepository = prestacionRepository;
         this.profesionalClient = profesionalClient;
-        this.usuarioClient = usuarioClient;
         this.clock = clock;
         this.claveInterna = claveInterna;
     }
 
     @Transactional
-    public CitaResponse crear(CitaRequest request, Long idPaciente) {
+    public CitaResponse crear(CitaRequest request, UsuarioAutenticado paciente) {
         log.info("Paciente {} reserva con doctor {} el {} a las {}",
-                idPaciente, request.getDoctorId(), request.getFecha(), request.getHora());
+                paciente.id(), request.getDoctorId(), request.getFecha(), request.getHora());
 
         Prestacion prestacion = prestacionRepository.findByValor(request.getTipoConsulta())
                 .orElseThrow(() -> new RecursoNoEncontradoException("La prestación no existe"));
 
         ProfesionalExterno profesional = profesionalClient.obtener(request.getDoctorId());
-
-        UsuarioExterno paciente = usuarioClient.obtener(idPaciente);
 
         validarFechaYHora(request.getFecha(), request.getHora());
 
@@ -95,10 +89,10 @@ public class CitaService {
         cita.setFecha(request.getFecha());
         cita.setHora(request.getHora());
         cita.setModalidad(request.getModalidad());
-        cita.setIdPaciente(idPaciente);
-        cita.setPaciente(paciente.getNombre());
-        cita.setRut(paciente.getRut());
-        cita.setCorreo(paciente.getCorreo());
+        cita.setIdPaciente(paciente.id());
+        cita.setPaciente(paciente.nombre());
+        cita.setRut(paciente.rut());
+        cita.setCorreo(paciente.correo());
         cita.setEstado(EstadoCita.PENDIENTE);
         cita.setCreadaEl(LocalDateTime.now(clock));
 
