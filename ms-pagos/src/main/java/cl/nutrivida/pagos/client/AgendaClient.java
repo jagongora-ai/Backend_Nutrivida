@@ -2,6 +2,7 @@ package cl.nutrivida.pagos.client;
 
 import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
@@ -13,16 +14,21 @@ import cl.nutrivida.pagos.dto.CitaResponse;
 @Component
 public class AgendaClient {
     private final WebClient webClient;
+    private final String claveInterna;
 
     public AgendaClient(WebClient.Builder builder,
-                        @Value("${agenda.service-id:MS-AGENDA}") String serviceId) {
+                        @Value("${agenda.service-id:MS-AGENDA}") String serviceId,
+                        @Value("${servicios.clave-interna}") String claveInterna) {
         this.webClient = builder.baseUrl("http://" + serviceId).build();
+        this.claveInterna = claveInterna;
     }
 
-    public CitaAgenda obtenerCita(Long citaId) {
+    // se reenvia el token del cliente porque ms-agendar revisa que la cita sea suya
+    public CitaAgenda obtenerCita(Long citaId, String token) {
         try {
             CitaResponse cita = webClient.get()
                 .uri("/api/citas/{id}", citaId)
+                .header(HttpHeaders.AUTHORIZATION, token)
                 .retrieve()
                 .bodyToMono(CitaResponse.class)
                 .block();
@@ -44,10 +50,12 @@ public class AgendaClient {
         }
     }
 
+    // marcar pagada no usa el token del cliente: va con la clave interna que solo conocen los micros
     public void marcarPagada(Long citaId) {
         try {
             webClient.patch()
                 .uri("/api/citas/{id}/pagada", citaId)
+                .header("X-ClaveInterna", claveInterna)
                 .retrieve()
                 .toBodilessEntity()
                 .block();
