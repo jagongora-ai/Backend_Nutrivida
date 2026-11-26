@@ -32,6 +32,7 @@ public class JwtService {
             .subject(String.valueOf(usuario.getId()))
             .claim("rol", usuario.getRol().getNombre())
             .claim("nombre", usuario.getNombre())
+            .claim("rut", usuario.getRut())
             .claim("correo", usuario.getCorreo())
             .claim("profesionalId", usuario.getProfesionalId())
             .issuedAt(new Date())
